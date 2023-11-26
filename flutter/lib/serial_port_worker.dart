@@ -92,18 +92,6 @@ class MaximumSpeedRequest {
   final int maximumSpeed;
 }
 
-class TxDelayRequest {
-  TxDelayRequest({required this.txDelay});
-
-  final int txDelay;
-}
-
-class TxTimeoutRequest {
-  TxTimeoutRequest({required this.txTimeout});
-
-  final int txTimeout;
-}
-
 class SerialPortListRequest {}
 
 class SerialPortListResponse {
@@ -122,12 +110,11 @@ class SerialPortOpenRequest {}
 class SerialPortCloseRequest {}
 
 class SerialPortResponse {
-  SerialPortResponse(SerialPort? serialPort) {
+  SerialPortResponse(SerialPort? serialPort, String? serialPortName) {
+    name = serialPortName;
     if (serialPort == null) {
-      name = null;
       isOpen = false;
     } else {
-      name = serialPort.name;
       isOpen = serialPort.isOpen;
     }
   }
@@ -157,6 +144,7 @@ class CarControllerPair {
 
 class SerialPortWorker {
   late SendPort _callbackPort;
+  String? _serialPortName;
   SerialPort? _serialPort;
   SerialPortReader? _serialPortReader;
   StreamSubscription<Uint8List>? _serialPortStreamSubscription;
@@ -165,10 +153,7 @@ class SerialPortWorker {
   OxigenTxPitlaneLapTrigger? _txPitlaneLapTrigger;
   OxigenTxRaceState? _txRaceState;
   int? _maximumSpeed;
-  int _txDelay = 500;
-  int _txTimeout = 1000;
   Timer? _txTimer;
-  Timer? _txTimeoutTimer;
   Uint8List? _unusedBuffer;
   final Queue<TxGlobalCommand> _txGlobalCommandQueue = Queue<TxGlobalCommand>();
   final Queue<TxCarControllerCommand> _txCarControllerCommandQueue = Queue<TxCarControllerCommand>();
@@ -192,8 +177,10 @@ class SerialPortWorker {
         _serialPortClose();
       } else if (message is OxigenTxPitlaneLapCounting) {
         _txPitlaneLapCounting = message;
+        _serialPortTx();
       } else if (message is OxigenTxPitlaneLapTrigger) {
         _txPitlaneLapTrigger = message;
+        _serialPortTx();
       } else if (message is OxigenTxRaceState) {
         if (_txRaceState == OxigenTxRaceState.stopped && message == OxigenTxRaceState.running) {
           for (final x in _carControllerPairs.entries) {
@@ -205,18 +192,18 @@ class SerialPortWorker {
           }
         }
         _txRaceState = message;
+        _serialPortTx();
       } else if (message is MaximumSpeedRequest) {
         _maximumSpeed = message.maximumSpeed;
-      } else if (message is TxDelayRequest) {
-        _txDelay = message.txDelay;
-      } else if (message is TxTimeoutRequest) {
-        _txTimeout = message.txTimeout;
+        _serialPortTx();
       } else if (message is TxGlobalCommand) {
         _carControllerPairs[0]!.tx = message.tx;
         _txGlobalCommandQueue.addLast(message);
+        _serialPortTx();
       } else if (message is TxCarControllerCommand) {
         _carControllerPairs[message.id]!.tx = message.tx;
         _txCarControllerCommandQueue.addLast(message);
+        _serialPortTx();
       } else if (message == null) {
         break;
       }
@@ -276,16 +263,13 @@ class SerialPortWorker {
   }
 
   void _serialPortSet(String name) {
+    print('_serialPortSet $name');
     _serialPortClear();
-    _serialPort = SerialPort(name);
-    _callbackPort.send(SerialPortResponse(_serialPort));
+    _serialPortName = name;
+    _callbackPort.send(SerialPortResponse(_serialPort, _serialPortName));
   }
 
   void _serialPortClear() {
-    if (_txTimeoutTimer != null) {
-      _txTimeoutTimer!.cancel();
-      _txTimeoutTimer = null;
-    }
     if (_txTimer != null) {
       _txTimer!.cancel();
       _txTimer = null;
@@ -303,6 +287,8 @@ class SerialPortWorker {
         if (!_serialPort!.close() && SerialPort.lastError != null) {
           _callbackPort.send(SerialPort.lastError);
         }
+        //_serialPort!.dispose();
+        _serialPort = null;
       }
     }
   }
@@ -336,6 +322,7 @@ class SerialPortWorker {
 
   void _serialPortOpen() {
     try {
+      _serialPort = SerialPort(_serialPortName!);
       if (!_serialPort!.openReadWrite() && SerialPort.lastError != null) {
         _callbackPort.send(SerialPort.lastError);
         return;
@@ -354,8 +341,8 @@ class SerialPortWorker {
       _serialPort!.config = serialPortConfig;
       serialPortConfig.dispose();
 
-      _callbackPort.send(SerialPortResponse(_serialPort));
-      _serialPortReadStream();
+      _callbackPort.send(SerialPortResponse(_serialPort, _serialPortName));
+      _serialPortRx();
       _serialPortDongleCommandDongleFirmwareVersion();
     } on SerialPortError catch (e) {
       print('_serialPortOpen SerialPortError error: ${e.message}');
@@ -369,7 +356,7 @@ class SerialPortWorker {
   void _serialPortClose() {
     try {
       _serialPortClear();
-      _callbackPort.send(SerialPortResponse(_serialPort));
+      _callbackPort.send(SerialPortResponse(_serialPort, _serialPortName));
     } on SerialPortError catch (e) {
       print('_serialPortClose SerialPortError error: ${e.message}');
       _callbackPort.send(e);
@@ -396,6 +383,7 @@ class SerialPortWorker {
     try {
       final bytes = Uint8List.fromList([15, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
       _serialPort!.write(bytes);
+      _serialPortTx();
     } on SerialPortError catch (e) {
       print('_serialPortRxInit SerialPortError error: ${e.message}');
       _callbackPort.send(e);
@@ -405,7 +393,11 @@ class SerialPortWorker {
     }
   }
 
-  void _serialPortWriteLoop() {
+  void _serialPortTx() {
+    if (!_serialPortIsOpen()) {
+      return;
+    }
+
     try {
       int byte0;
       switch (_txRaceState) {
@@ -560,18 +552,18 @@ class SerialPortWorker {
         // }
       }
 
+      final bytes = Uint8List.fromList([byte0, _maximumSpeed!, id, byte3, byte4, byte5, byte6, 0, 0, 0, 0]);
+      print(bytes);
+      _serialPort!.write(bytes, timeout: 0);
+
       if (_txTimer != null) {
         _txTimer!.cancel();
         _txTimer = null;
       }
 
-      final bytes = Uint8List.fromList([byte0, _maximumSpeed!, id, byte3, byte4, byte5, byte6, 0, 0, 0, 0]);
-      _serialPort!.write(bytes, timeout: 0);
-
-      if (_txTimeoutTimer != null) {
-        _txTimeoutTimer!.cancel();
+      if (_txGlobalCommandQueue.isNotEmpty || _txCarControllerCommandQueue.isNotEmpty) {
+        _txTimer = Timer(const Duration(milliseconds: 100), () => _serialPortTx());
       }
-      _txTimeoutTimer = Timer(Duration(milliseconds: _txTimeout), () => _serialPortWriteLoop());
     } on SerialPortError catch (e) {
       print('_serialPortWriteLoop SerialPortError error: ${e.message}');
       _callbackPort.send(e);
@@ -582,7 +574,7 @@ class SerialPortWorker {
     }
   }
 
-  void _serialPortReadStream() {
+  void _serialPortRx() {
     _serialPortReader = SerialPortReader(_serialPort!);
     _serialPortStreamSubscription = _serialPortReader!.stream.listen((buffer) async {
       //print('_serialPortReadStream');
@@ -614,12 +606,6 @@ class SerialPortWorker {
             _callbackPort.send(RxResponse(timestamp: now.millisecondsSinceEpoch, rxBufferLength: buffer.length));
           }
         }
-
-        if (_txTimer != null) {
-          _txTimer!.cancel();
-        }
-
-        _txTimer = Timer(Duration(milliseconds: _txDelay), () => _serialPortWriteLoop());
       } on SerialPortError catch (e) {
         print('_serialPortReadStream SerialPortError error: ${e.message}');
         _callbackPort.send(e);
@@ -749,7 +735,9 @@ class SerialPortWorker {
         rxCarControllerPair.controllerFirmwareVersion = softwareRelease;
         break;
       case OxigenRxDeviceSoftwareReleaseOwner.carSoftwareRelease:
-        rxCarControllerPair.carFirmwareVersion = softwareRelease;
+        if (rxCarControllerPair.carOnTrack == OxigenRxCarOnTrack.carIsOnTheTrack) {
+          rxCarControllerPair.carFirmwareVersion = softwareRelease;
+        }
         break;
     }
 

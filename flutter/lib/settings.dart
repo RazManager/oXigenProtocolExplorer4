@@ -122,6 +122,12 @@ class Settings extends StatelessWidget {
           ),
           CommandSlider(max: 255, id: 0, value: model.maximumSpeed, setValue: model.oxigenMaximumSpeedSet),
           const SizedBox(height: 16),
+          const Text(
+            'Controller timeout (s) *',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          CommandSlider(max: 255, id: 0, value: model.rxControllerTimeout, setValue: model.controllerTimeoutSet),
+          const SizedBox(height: 16),
           Row(
             children: [
               FilledButton.tonal(

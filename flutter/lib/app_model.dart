@@ -36,8 +36,6 @@ class AppModel extends ChangeNotifier {
   OxigenTxPitlaneLapTrigger? txPitlaneLapTrigger;
   OxigenTxRaceState? txRaceState;
   int? maximumSpeed;
-  int txDelay = 500;
-  int txTimeout = 1000;
   int rxControllerTimeout = 30;
   int rxBufferLength = 0;
   final exceptionStreamController = StreamController<String>.broadcast();
@@ -141,19 +139,7 @@ class AppModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void txDelaySet(int value) {
-    txDelay = value;
-    _sendPort!.send(TxDelayRequest(txDelay: value));
-    notifyListeners();
-  }
-
-  void txTimeoutSet(int value) {
-    txTimeout = value;
-    _sendPort!.send(TxTimeoutRequest(txTimeout: value));
-    notifyListeners();
-  }
-
-  void controllerTimeoutSet(int value) {
+  void controllerTimeoutSet(int id, int value) {
     rxControllerTimeout = value;
     notifyListeners();
   }

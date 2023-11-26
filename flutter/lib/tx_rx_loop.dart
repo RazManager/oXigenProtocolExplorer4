@@ -79,69 +79,6 @@ class _TxRxLoopState extends State<TxRxLoop> {
             child: Consumer<AppModel>(builder: (context, model, child) {
               final carControllerPairs = model.carControllerPairs();
               return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Table(
-                  children: [
-                    const TableRow(children: [
-                      Center(
-                        child: Text(
-                          'Transmit delay (ms) *',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      Center(
-                        child: Text(
-                          'Transmit timeout (ms) *',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      Center(
-                        child: Text(
-                          'Controller timeout (s) *',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ]),
-                    TableRow(children: [
-                      Center(child: Text(model.txDelay.toString())),
-                      Center(child: Text(model.txTimeout.toString())),
-                      Center(child: Text(model.rxControllerTimeout.toString())),
-                    ]),
-                    TableRow(children: [
-                      Slider(
-                        min: 0,
-                        max: 2000,
-                        divisions: 2000,
-                        value: model.txDelay.toDouble(),
-                        onChanged: (newValue) {
-                          if (newValue <= model.txTimeout) {
-                            model.txDelaySet(newValue.round());
-                          }
-                        },
-                      ),
-                      Slider(
-                        min: 0,
-                        max: 2000,
-                        divisions: 2000,
-                        value: model.txTimeout.toDouble(),
-                        onChanged: (newValue) {
-                          if (newValue >= model.txDelay) {
-                            model.txTimeoutSet(newValue.round());
-                          }
-                        },
-                      ),
-                      Slider(
-                        min: 10,
-                        max: 60,
-                        divisions: 50,
-                        value: model.rxControllerTimeout.toDouble(),
-                        onChanged: (newValue) {
-                          model.controllerTimeoutSet(newValue.round());
-                        },
-                      ),
-                    ])
-                  ],
-                ),
-                const SizedBox(height: 16),
                 Center(
                   child: SegmentedButton<ChartType>(
                     segments: const [
