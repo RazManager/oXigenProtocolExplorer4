@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 0.9.0+1
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -41,6 +41,7 @@ dependencies:
   package_info_plus: ^5.0.1
   syncfusion_flutter_charts: ^23.2.4
   syncfusion_flutter_gauges: ^23.2.4
+  flutter_launcher_icons: ^0.13.1
 
 dev_dependencies:
   flutter_test:
@@ -80,7 +81,10 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
+  fonts:
+    - family: BungeeInline
+      fonts:
+        - asset: assets/fonts/BungeeInline-Regular.ttf
   #   - family: Schyler
   #     fonts:
   #       - asset: fonts/Schyler-Regular.ttf
@@ -94,3 +98,16 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+flutter_launcher_icons:
+  image_path: "assets/icons/logo.png"
+  android: true
+  ios: true
+  web:
+    generate: false
+  windows:
+    generate: true
+    image_path: "assets/icons/logo.png"
+  macos:
+    generate: true
+    image_path: "assets/icons/logo.png"

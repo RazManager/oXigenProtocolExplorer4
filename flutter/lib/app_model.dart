@@ -244,9 +244,7 @@ class AppModel extends ChangeNotifier {
       }
 
       rxResponseQueue.addLast(message);
-      while (rxResponseQueue.length >= 100) {
-        rxResponseQueue.removeFirst();
-      }
+      rxResponseQueue.removeWhere((x) => x.timestamp < (DateTime.now().millisecondsSinceEpoch - 10 * 1000));
 
       notifyListeners();
     } else if (message is DongleFirmwareVersionResponse) {

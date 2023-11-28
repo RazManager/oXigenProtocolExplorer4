@@ -58,7 +58,7 @@ class AppNavigationRail extends StatelessWidget {
   void showAbout(BuildContext context, String applicationVersion) {
     showAboutDialog(
         context: context,
-        applicationIcon: const ImageIcon(AssetImage('assets/icons/logo.png')),
+        //applicationIcon: const ImageIcon(AssetImage('assets/icons/logo.png')),
         applicationName: "oXigen Protocol Explorer 4",
         children: [
           Row(children: [

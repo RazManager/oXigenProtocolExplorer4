@@ -44,7 +44,7 @@ class RxCarControllerPair {
   double? carFirmwareVersion;
   DateTime? updatedAt;
   int? refreshRate;
-  Queue<CarControllerRxRefreshRate> txRefreshRates = Queue<CarControllerRxRefreshRate>();
+  List<CarControllerRxRefreshRate> txRefreshRates = [];
   double? fastestLapTime;
   List<TriggerMeanValue> triggerMeanValues = [];
   Queue<PracticeSessionLap> practiceSessionLaps = Queue<PracticeSessionLap>();
@@ -192,6 +192,7 @@ class SerialPortWorker {
           }
         }
         _txRaceState = message;
+        _serialPortTx();
         _serialPortTx();
       } else if (message is MaximumSpeedRequest) {
         _maximumSpeed = message.maximumSpeed;
@@ -547,13 +548,13 @@ class SerialPortWorker {
             break;
         }
 
-        // if (id > 0) {
-        //   byte3 = byte3 | 0x80;
-        // }
+        if (id > 0) {
+          byte5 = byte5 | 0x80;
+        }
       }
 
       final bytes = Uint8List.fromList([byte0, _maximumSpeed!, id, byte3, byte4, byte5, byte6, 0, 0, 0, 0]);
-      print(bytes);
+      //print(bytes);
       _serialPort!.write(bytes, timeout: 0);
 
       if (_txTimer != null) {
@@ -564,6 +565,8 @@ class SerialPortWorker {
       if (_txGlobalCommandQueue.isNotEmpty || _txCarControllerCommandQueue.isNotEmpty) {
         _txTimer = Timer(const Duration(milliseconds: 100), () => _serialPortTx());
       }
+
+      //_txTimer = Timer(const Duration(milliseconds: 500), () => _serialPortTx());
     } on SerialPortError catch (e) {
       print('_serialPortWriteLoop SerialPortError error: ${e.message}');
       _callbackPort.send(e);
@@ -577,10 +580,9 @@ class SerialPortWorker {
   void _serialPortRx() {
     _serialPortReader = SerialPortReader(_serialPort!);
     _serialPortStreamSubscription = _serialPortReader!.stream.listen((buffer) async {
-      //print('_serialPortReadStream');
       final now = DateTime.now();
       try {
-        print(buffer.length);
+        //print(buffer.length);
         if (buffer.length == 5) {
           _unusedBuffer = null;
           _callbackPort.send(DongleFirmwareVersionResponse(dongleFirmwareVersion: buffer[0] + buffer[1] / 100));
@@ -629,11 +631,12 @@ class SerialPortWorker {
           now: now);
 
       if (_carControllerPairs[id]!.rx.refreshRate != null) {
-        _carControllerPairs[id]!.rx.txRefreshRates.addLast(CarControllerRxRefreshRate(
+        _carControllerPairs[id]!.rx.txRefreshRates.add(CarControllerRxRefreshRate(
             timestamp: now.millisecondsSinceEpoch, refreshRate: _carControllerPairs[id]!.rx.refreshRate!));
-        while (_carControllerPairs[id]!.rx.txRefreshRates.length >= 20) {
-          _carControllerPairs[id]!.rx.txRefreshRates.removeFirst();
-        }
+        _carControllerPairs[id]!
+            .rx
+            .txRefreshRates
+            .removeWhere((x) => x.timestamp < (now.millisecondsSinceEpoch - 10 * 1000));
       }
 
       result.updatedRxCarControllerPairs[id] = _carControllerPairs[id]!.rx;
@@ -651,7 +654,7 @@ class SerialPortWorker {
     final oldControllerCarLink = rxCarControllerPair.controllerCarLink;
     final oldDongleLaps = rxCarControllerPair.dongleLaps;
 
-    print(buffer);
+    //print(buffer);
 
     if (buffer[0] & (pow(2, 0) as int) == 0) {
       rxCarControllerPair.carReset = OxigenRxCarReset.carPowerSupplyHasntChanged;
@@ -742,6 +745,8 @@ class SerialPortWorker {
     }
 
     rxCarControllerPair.dongleRaceTimer = buffer[10] * 65536 + buffer[11] * 256 + buffer[12];
+    //print(
+    //    'oldDongleLaps=$oldDongleLaps dongleLaps=${rxCarControllerPair.dongleLaps} dongleRaceTimer=${rxCarControllerPair.dongleRaceTimer} previousLapRaceTimer=${rxCarControllerPair.previousLapRaceTimer}');
 
     rxCarControllerPair.dongleLapRaceTimer =
         rxCarControllerPair.dongleRaceTimer - rxCarControllerPair.dongleLapTimeDelay;
@@ -749,12 +754,13 @@ class SerialPortWorker {
     rxCarControllerPair.dongleLapTimeSeconds = rxCarControllerPair.dongleLapTime / 99.25;
 
     if (rxCarControllerPair.previousLapRaceTimer == null) {
-      if (rxCarControllerPair.dongleRaceTimer == 0) {
+      if (rxCarControllerPair.dongleLapTime == 0) {
         rxCarControllerPair.previousLapRaceTimer = 0;
       }
     } else if (rxCarControllerPair.dongleRaceTimer > 0) {
       if (oldDongleLaps != rxCarControllerPair.dongleLaps) {
         // New lap
+        //print('New lap');
         if (rxCarControllerPair.calculatedLaps == null) {
           rxCarControllerPair.calculatedLaps = 0;
         } else {
