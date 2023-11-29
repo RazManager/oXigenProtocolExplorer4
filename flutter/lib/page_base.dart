@@ -12,6 +12,7 @@ import 'controller_data.dart';
 import 'global_commands.dart';
 import 'lap_data.dart';
 import 'practice_session.dart';
+import 'race_session.dart';
 import 'settings.dart';
 import 'tx_rx_loop.dart';
 
@@ -48,6 +49,10 @@ final router = GoRouter(
     GoRoute(
       path: '/practice-session',
       pageBuilder: (context, state) => NoTransitionPage<void>(key: state.pageKey, child: const PracticeSession()),
+    ),
+    GoRoute(
+      path: '/race-session',
+      pageBuilder: (context, state) => NoTransitionPage<void>(key: state.pageKey, child: const RaceSession()),
     ),
   ],
 );
@@ -147,6 +152,10 @@ class AppNavigationRail extends StatelessWidget {
                       break;
 
                     case 8:
+                      context.go('/race-session');
+                      break;
+
+                    case 9:
                       showAbout(context, model.applicationVersion);
                       break;
                     default:
@@ -188,6 +197,10 @@ class AppNavigationRail extends StatelessWidget {
                   NavigationRailDestination(
                     icon: Icon(Icons.sports_motorsports),
                     label: Text('Practice session'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.sports_motorsports),
+                    label: Text('Race session'),
                   ),
                   NavigationRailDestination(
                     icon: Icon(Icons.info),

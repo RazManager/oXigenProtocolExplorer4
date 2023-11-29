@@ -146,78 +146,43 @@ class AppModel extends ChangeNotifier {
 
   void oxigenTxMaximumSpeedSet(int id, int value) {
     _carControllerPairs[id]!.tx.maximumSpeed = value;
-    if (id == 0) {
-      _sendPort!.send(TxGlobalCommand(command: OxigenTxCommand.maximumSpeed, tx: _carControllerPairs[id]!.tx));
-    } else {
-      _sendPort!
-          .send(TxCarControllerCommand(id: id, command: OxigenTxCommand.maximumSpeed, tx: _carControllerPairs[id]!.tx));
-    }
+    _sendPort!.send(TxCommand(id: id, command: OxigenTxCommand.maximumSpeed, tx: _carControllerPairs[id]!.tx));
     notifyListeners();
   }
 
   void oxigenTxMinimumSpeedSet(int id, int value) {
     _carControllerPairs[id]!.tx.minimumSpeed = value;
-    if (id == 0) {
-      _sendPort!.send(TxGlobalCommand(command: OxigenTxCommand.minimumSpeed, tx: _carControllerPairs[id]!.tx));
-    } else {
-      _sendPort!
-          .send(TxCarControllerCommand(id: id, command: OxigenTxCommand.minimumSpeed, tx: _carControllerPairs[id]!.tx));
-    }
+    _sendPort!.send(TxCommand(id: id, command: OxigenTxCommand.minimumSpeed, tx: _carControllerPairs[id]!.tx));
     notifyListeners();
   }
 
   void oxigenTxPitlaneSpeedSet(int id, int value) {
     _carControllerPairs[id]!.tx.pitlaneSpeed = value;
-    if (id == 0) {
-      _sendPort!.send(TxGlobalCommand(command: OxigenTxCommand.pitlaneSpeed, tx: _carControllerPairs[id]!.tx));
-    } else {
-      _sendPort!
-          .send(TxCarControllerCommand(id: id, command: OxigenTxCommand.pitlaneSpeed, tx: _carControllerPairs[id]!.tx));
-    }
+    _sendPort!.send(TxCommand(id: id, command: OxigenTxCommand.pitlaneSpeed, tx: _carControllerPairs[id]!.tx));
     notifyListeners();
   }
 
   void oxigenTxMaximumBrakeSet(int id, int value) {
     _carControllerPairs[id]!.tx.maximumBrake = value;
-    if (id == 0) {
-      _sendPort!.send(TxGlobalCommand(command: OxigenTxCommand.maximumBrake, tx: _carControllerPairs[id]!.tx));
-    } else {
-      _sendPort!
-          .send(TxCarControllerCommand(id: id, command: OxigenTxCommand.maximumBrake, tx: _carControllerPairs[id]!.tx));
-    }
+    _sendPort!.send(TxCommand(id: id, command: OxigenTxCommand.maximumBrake, tx: _carControllerPairs[id]!.tx));
     notifyListeners();
   }
 
   void oxigenTxForceLcUpSet(int id, bool value) {
     _carControllerPairs[id]!.tx.forceLcUp = value;
-    if (id == 0) {
-      _sendPort!.send(TxGlobalCommand(command: OxigenTxCommand.forceLcUp, tx: _carControllerPairs[id]!.tx));
-    } else {
-      _sendPort!
-          .send(TxCarControllerCommand(id: id, command: OxigenTxCommand.forceLcUp, tx: _carControllerPairs[id]!.tx));
-    }
+    _sendPort!.send(TxCommand(id: id, command: OxigenTxCommand.forceLcUp, tx: _carControllerPairs[id]!.tx));
     notifyListeners();
   }
 
   void oxigenTxForceLcDownSet(int id, bool value) {
     _carControllerPairs[id]!.tx.forceLcDown = value;
-    if (id == 0) {
-      _sendPort!.send(TxGlobalCommand(command: OxigenTxCommand.forceLcDown, tx: _carControllerPairs[id]!.tx));
-    } else {
-      _sendPort!
-          .send(TxCarControllerCommand(id: id, command: OxigenTxCommand.forceLcDown, tx: _carControllerPairs[id]!.tx));
-    }
+    _sendPort!.send(TxCommand(id: id, command: OxigenTxCommand.forceLcDown, tx: _carControllerPairs[id]!.tx));
     notifyListeners();
   }
 
   void oxigenTxTransmissionPowerSet(int id, OxigenTxTransmissionPower value) {
     _carControllerPairs[id]!.tx.transmissionPower = value;
-    if (id == 0) {
-      _sendPort!.send(TxGlobalCommand(command: OxigenTxCommand.transmissionPower, tx: _carControllerPairs[id]!.tx));
-    } else {
-      _sendPort!.send(
-          TxCarControllerCommand(id: id, command: OxigenTxCommand.transmissionPower, tx: _carControllerPairs[id]!.tx));
-    }
+    _sendPort!.send(TxCommand(id: id, command: OxigenTxCommand.transmissionPower, tx: _carControllerPairs[id]!.tx));
     notifyListeners();
   }
 

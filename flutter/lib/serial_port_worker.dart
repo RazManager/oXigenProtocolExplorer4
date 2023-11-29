@@ -64,15 +64,8 @@ class PracticeSessionLap {
   final double lapTime;
 }
 
-class TxGlobalCommand {
-  TxGlobalCommand({required this.command, required this.tx});
-
-  final OxigenTxCommand command;
-  final TxCarControllerPair tx;
-}
-
-class TxCarControllerCommand {
-  TxCarControllerCommand({required this.id, required this.command, required this.tx});
+class TxCommand {
+  TxCommand({required this.id, required this.command, required this.tx});
 
   final int id;
   final OxigenTxCommand command;
@@ -153,10 +146,7 @@ class SerialPortWorker {
   OxigenTxPitlaneLapTrigger? _txPitlaneLapTrigger;
   OxigenTxRaceState? _txRaceState;
   int? _maximumSpeed;
-  Timer? _txTimer;
   Uint8List? _unusedBuffer;
-  final Queue<TxGlobalCommand> _txGlobalCommandQueue = Queue<TxGlobalCommand>();
-  final Queue<TxCarControllerCommand> _txCarControllerCommandQueue = Queue<TxCarControllerCommand>();
 
   final Map<int, CarControllerPair> _carControllerPairs = List.generate(21, (index) => CarControllerPair()).asMap();
 
@@ -177,12 +167,14 @@ class SerialPortWorker {
         _serialPortClose();
       } else if (message is OxigenTxPitlaneLapCounting) {
         _txPitlaneLapCounting = message;
-        _serialPortTx();
+        _serialPortTx(null);
       } else if (message is OxigenTxPitlaneLapTrigger) {
         _txPitlaneLapTrigger = message;
-        _serialPortTx();
+        _serialPortTx(null);
       } else if (message is OxigenTxRaceState) {
+        bool resetRaceTimer = false;
         if (_txRaceState == OxigenTxRaceState.stopped && message == OxigenTxRaceState.running) {
+          resetRaceTimer = true;
           for (final x in _carControllerPairs.entries) {
             x.value.rx.previousLapRaceTimer = null;
             x.value.rx.calculatedLapTimeSeconds = null;
@@ -192,19 +184,16 @@ class SerialPortWorker {
           }
         }
         _txRaceState = message;
-        _serialPortTx();
-        _serialPortTx();
+        if (resetRaceTimer) {
+          _serialPortTx(null);
+        }
+        _serialPortTx(null);
       } else if (message is MaximumSpeedRequest) {
         _maximumSpeed = message.maximumSpeed;
-        _serialPortTx();
-      } else if (message is TxGlobalCommand) {
-        _carControllerPairs[0]!.tx = message.tx;
-        _txGlobalCommandQueue.addLast(message);
-        _serialPortTx();
-      } else if (message is TxCarControllerCommand) {
+        _serialPortTx(null);
+      } else if (message is TxCommand) {
         _carControllerPairs[message.id]!.tx = message.tx;
-        _txCarControllerCommandQueue.addLast(message);
-        _serialPortTx();
+        _serialPortTx(message);
       } else if (message == null) {
         break;
       }
@@ -271,10 +260,6 @@ class SerialPortWorker {
   }
 
   void _serialPortClear() {
-    if (_txTimer != null) {
-      _txTimer!.cancel();
-      _txTimer = null;
-    }
     if (_serialPortStreamSubscription != null) {
       _serialPortStreamSubscription!.cancel();
       _serialPortStreamSubscription = null;
@@ -384,7 +369,7 @@ class SerialPortWorker {
     try {
       final bytes = Uint8List.fromList([15, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
       _serialPort!.write(bytes);
-      _serialPortTx();
+      _serialPortTx(null);
     } on SerialPortError catch (e) {
       print('_serialPortRxInit SerialPortError error: ${e.message}');
       _callbackPort.send(e);
@@ -394,7 +379,7 @@ class SerialPortWorker {
     }
   }
 
-  void _serialPortTx() {
+  void _serialPortTx(TxCommand? txCommand) {
     if (!_serialPortIsOpen()) {
       return;
     }
@@ -454,11 +439,7 @@ class SerialPortWorker {
       var byte3 = 0;
       var byte4 = 0;
 
-      if (_txGlobalCommandQueue.isNotEmpty) {
-        final txCommand = _txGlobalCommandQueue.first;
-        _txGlobalCommandQueue.removeFirst();
-        _txGlobalCommandQueue.removeWhere((x) => x.command == txCommand.command);
-
+      if (txCommand != null && txCommand.id == 0) {
         final txCarControllerPair = _carControllerPairs[0]!.tx;
 
         switch (txCommand.command) {
@@ -495,21 +476,13 @@ class SerialPortWorker {
             byte4 = txCarControllerPair.transmissionPower?.index ?? 0;
             break;
         }
-
-        // if (id > 0) {
-        //   byte3 = byte3 | 0x80;
-        // }
       }
 
       var id = 0;
       var byte5 = 0;
       var byte6 = 0;
 
-      if (_txCarControllerCommandQueue.isNotEmpty) {
-        final txCommand = _txCarControllerCommandQueue.first;
-        _txCarControllerCommandQueue.removeFirst();
-        _txCarControllerCommandQueue.removeWhere((x) => x.id == txCommand.id && x.command == txCommand.command);
-
+      if (txCommand != null && txCommand.id != 0) {
         id = txCommand.id;
         final txCarControllerPair = _carControllerPairs[id]!.tx;
 
@@ -556,17 +529,6 @@ class SerialPortWorker {
       final bytes = Uint8List.fromList([byte0, _maximumSpeed!, id, byte3, byte4, byte5, byte6, 0, 0, 0, 0]);
       //print(bytes);
       _serialPort!.write(bytes, timeout: 0);
-
-      if (_txTimer != null) {
-        _txTimer!.cancel();
-        _txTimer = null;
-      }
-
-      if (_txGlobalCommandQueue.isNotEmpty || _txCarControllerCommandQueue.isNotEmpty) {
-        _txTimer = Timer(const Duration(milliseconds: 100), () => _serialPortTx());
-      }
-
-      //_txTimer = Timer(const Duration(milliseconds: 500), () => _serialPortTx());
     } on SerialPortError catch (e) {
       print('_serialPortWriteLoop SerialPortError error: ${e.message}');
       _callbackPort.send(e);
@@ -753,36 +715,29 @@ class SerialPortWorker {
 
     rxCarControllerPair.dongleLapTimeSeconds = rxCarControllerPair.dongleLapTime / 99.25;
 
-    if (rxCarControllerPair.previousLapRaceTimer == null) {
-      if (rxCarControllerPair.dongleLapTime == 0) {
-        rxCarControllerPair.previousLapRaceTimer = 0;
-      }
-    } else if (rxCarControllerPair.dongleRaceTimer > 0) {
-      if (oldDongleLaps != rxCarControllerPair.dongleLaps) {
-        // New lap
-        //print('New lap');
-        if (rxCarControllerPair.calculatedLaps == null) {
-          rxCarControllerPair.calculatedLaps = 0;
-        } else {
-          rxCarControllerPair.calculatedLaps = rxCarControllerPair.calculatedLaps! + 1;
-          if (rxCarControllerPair.previousLapRaceTimer != null) {
-            rxCarControllerPair.calculatedLapTimeSeconds =
-                (rxCarControllerPair.dongleLapRaceTimer - rxCarControllerPair.previousLapRaceTimer!) / 100.0;
+    if (oldDongleLaps != rxCarControllerPair.dongleLaps) {
+      // New lap, or the car crossed the start/finish line for the first time.
+      if (rxCarControllerPair.dongleLaps == 0 || rxCarControllerPair.calculatedLaps == null) {
+        rxCarControllerPair.calculatedLaps = 0;
+      } else {
+        rxCarControllerPair.calculatedLaps = rxCarControllerPair.calculatedLaps! + 1;
+        if (rxCarControllerPair.previousLapRaceTimer != null) {
+          rxCarControllerPair.calculatedLapTimeSeconds =
+              (rxCarControllerPair.dongleLapRaceTimer - rxCarControllerPair.previousLapRaceTimer!) / 100.0;
 
-            if (rxCarControllerPair.fastestLapTime == null ||
-                rxCarControllerPair.fastestLapTime! > rxCarControllerPair.calculatedLapTimeSeconds!) {
-              rxCarControllerPair.fastestLapTime = rxCarControllerPair.calculatedLapTimeSeconds!;
-            }
+          if (rxCarControllerPair.fastestLapTime == null ||
+              rxCarControllerPair.fastestLapTime! > rxCarControllerPair.calculatedLapTimeSeconds!) {
+            rxCarControllerPair.fastestLapTime = rxCarControllerPair.calculatedLapTimeSeconds!;
+          }
 
-            rxCarControllerPair.practiceSessionLaps.addFirst(PracticeSessionLap(
-                lap: rxCarControllerPair.calculatedLaps!, lapTime: rxCarControllerPair.calculatedLapTimeSeconds!));
-            if (rxCarControllerPair.practiceSessionLaps.length >= 6) {
-              rxCarControllerPair.practiceSessionLaps.removeLast();
-            }
+          rxCarControllerPair.practiceSessionLaps.addFirst(PracticeSessionLap(
+              lap: rxCarControllerPair.calculatedLaps!, lapTime: rxCarControllerPair.calculatedLapTimeSeconds!));
+          if (rxCarControllerPair.practiceSessionLaps.length >= 6) {
+            rxCarControllerPair.practiceSessionLaps.removeLast();
           }
         }
-        rxCarControllerPair.previousLapRaceTimer = rxCarControllerPair.dongleLapRaceTimer;
       }
+      rxCarControllerPair.previousLapRaceTimer = rxCarControllerPair.dongleLapRaceTimer;
     }
 
     if (rxCarControllerPair.updatedAt != null) {
