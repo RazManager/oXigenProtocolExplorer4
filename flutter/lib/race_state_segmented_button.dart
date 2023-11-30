@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'oxigen_constants.dart';
 
-class RaceStateButton extends StatelessWidget {
-  const RaceStateButton({super.key, this.value, required this.setValue});
+class RaceStateSegmentedButton extends StatelessWidget {
+  const RaceStateSegmentedButton({super.key, this.value, required this.setValue});
   final OxigenTxRaceState? value;
   final Function(OxigenTxRaceState) setValue;
 

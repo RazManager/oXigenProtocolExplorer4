@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'app_model.dart';
 import 'page_base.dart';
-import 'race_state_button.dart';
+import 'race_state_segmented_button.dart';
 
 class LapDataPage extends PageBase {
   const LapDataPage({super.key}) : super(title: 'Lap data', body: const LapData());
@@ -27,7 +27,7 @@ class LapData extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            RaceStateButton(value: model.txRaceState, setValue: model.oxigenTxRaceStateSet),
+            RaceStateSegmentedButton(value: model.txRaceState, setValue: model.oxigenTxRaceStateSet),
             FittedBox(
               child: DataTable(
                   columnSpacing: 10,

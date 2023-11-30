@@ -48,6 +48,7 @@ class RxCarControllerPair {
   double? fastestLapTime;
   List<TriggerMeanValue> triggerMeanValues = [];
   Queue<PracticeSessionLap> practiceSessionLaps = Queue<PracticeSessionLap>();
+  Map<int, double> lapTriggerMeanValueMilliSeconds = {};
 }
 
 class TriggerMeanValue {
@@ -62,6 +63,14 @@ class PracticeSessionLap {
 
   final int lap;
   final double lapTime;
+}
+
+class LapTriggerMeanValue {
+  LapTriggerMeanValue({required this.lap, required this.timestamp, required this.triggerMeanValue});
+
+  final int lap;
+  final int timestamp;
+  final int triggerMeanValue;
 }
 
 class TxCommand {
@@ -173,14 +182,20 @@ class SerialPortWorker {
         _serialPortTx(null);
       } else if (message is OxigenTxRaceState) {
         bool resetRaceTimer = false;
+        print('_txRaceState=$_txRaceState message=$message');
         if (_txRaceState == OxigenTxRaceState.stopped && message == OxigenTxRaceState.running) {
           resetRaceTimer = true;
+          print('resetRaceTimer');
           for (final x in _carControllerPairs.entries) {
             x.value.rx.previousLapRaceTimer = null;
             x.value.rx.calculatedLapTimeSeconds = null;
             x.value.rx.calculatedLaps = null;
             x.value.rx.fastestLapTime = null;
             x.value.rx.practiceSessionLaps = Queue<PracticeSessionLap>();
+            x.value.rx.lapTriggerMeanValueMilliSeconds = {};
+            for (var i = -10; i < 0; i++) {
+              x.value.rx.lapTriggerMeanValueMilliSeconds[i] = 0.0;
+            }
           }
         }
         _txRaceState = message;
@@ -715,7 +730,7 @@ class SerialPortWorker {
 
     rxCarControllerPair.dongleLapTimeSeconds = rxCarControllerPair.dongleLapTime / 99.25;
 
-    if (oldDongleLaps != rxCarControllerPair.dongleLaps) {
+    if (rxCarControllerPair.dongleLaps > oldDongleLaps) {
       // New lap, or the car crossed the start/finish line for the first time.
       if (rxCarControllerPair.dongleLaps == 0 || rxCarControllerPair.calculatedLaps == null) {
         rxCarControllerPair.calculatedLaps = 0;
@@ -738,11 +753,19 @@ class SerialPortWorker {
         }
       }
       rxCarControllerPair.previousLapRaceTimer = rxCarControllerPair.dongleLapRaceTimer;
+      rxCarControllerPair.lapTriggerMeanValueMilliSeconds[rxCarControllerPair.calculatedLaps!] = 0;
+      rxCarControllerPair.lapTriggerMeanValueMilliSeconds
+          .removeWhere((key, value) => key < rxCarControllerPair.calculatedLaps! - 10);
     }
 
     if (rxCarControllerPair.updatedAt != null) {
       rxCarControllerPair.refreshRate =
           now.millisecondsSinceEpoch - rxCarControllerPair.updatedAt!.millisecondsSinceEpoch;
+      if (rxCarControllerPair.calculatedLaps != null) {
+        rxCarControllerPair.lapTriggerMeanValueMilliSeconds.update(rxCarControllerPair.calculatedLaps!,
+            (value) => value + rxCarControllerPair.triggerMeanValue / rxCarControllerPair.refreshRate!);
+        print(rxCarControllerPair.lapTriggerMeanValueMilliSeconds[rxCarControllerPair.calculatedLaps]);
+      }
     }
     rxCarControllerPair.updatedAt = now;
 

@@ -8,6 +8,7 @@ import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 import 'app_model.dart';
 import 'oxigen_constants.dart';
+import 'race_state_bottom_navigation_bar.dart';
 import 'serial_port_worker.dart' hide CarControllerPair;
 import 'page_base.dart';
 
@@ -64,24 +65,8 @@ class _PracticeSessionState extends State<PracticeSession> {
                         .toList(),
                   ),
                 ),
-                bottomNavigationBar: Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    FloatingActionButton(
-                        child: const Icon(Icons.play_arrow),
-                        onPressed: () => model.oxigenTxRaceStateSet(OxigenTxRaceState.running)),
-                    const SizedBox(width: 16),
-                    FloatingActionButton(
-                        child: const Icon(Icons.pause),
-                        onPressed: () => model.oxigenTxRaceStateSet(OxigenTxRaceState.paused)),
-                    const SizedBox(width: 16),
-                    FloatingActionButton(
-                        child: const Icon(Icons.stop),
-                        onPressed: () => model.oxigenTxRaceStateSet(OxigenTxRaceState.stopped)),
-                  ]),
-                ),
-
-                //RaceStateButton(value: model.txRaceState, setValue: model.oxigenTxRaceStateSet),
+                bottomNavigationBar:
+                    RaceStateBottomnaviagationBar(value: model.txRaceState, setValue: model.oxigenTxRaceStateSet),
                 body: TabBarView(
                   children: <Widget>[
                     PracticeSessionTabAll(carControllerPairs: carControllerPairs, stopwatch: model.stopwatch)

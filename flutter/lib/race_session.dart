@@ -7,11 +7,13 @@ import 'package:collection/collection.dart';
 
 //import 'package:syncfusion_flutter_charts/charts.dart';
 //import 'package:syncfusion_flutter_gauges/gauges.dart';
+import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 
 import 'app_model.dart';
 import 'oxigen_constants.dart';
 //import 'serial_port_worker.dart' hide CarControllerPair;
 import 'page_base.dart';
+import 'race_state_bottom_navigation_bar.dart';
 
 class RaceSession extends StatefulWidget {
   const RaceSession({super.key});
@@ -66,22 +68,8 @@ class _RaceSessionState extends State<RaceSession> {
                     Tab(text: 'Race driverboard')
                   ]),
                 ),
-                bottomNavigationBar: Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    FloatingActionButton(
-                        child: const Icon(Icons.play_arrow),
-                        onPressed: () => model.oxigenTxRaceStateSet(OxigenTxRaceState.running)),
-                    const SizedBox(width: 16),
-                    FloatingActionButton(
-                        child: const Icon(Icons.pause),
-                        onPressed: () => model.oxigenTxRaceStateSet(OxigenTxRaceState.paused)),
-                    const SizedBox(width: 16),
-                    FloatingActionButton(
-                        child: const Icon(Icons.stop),
-                        onPressed: () => model.oxigenTxRaceStateSet(OxigenTxRaceState.stopped)),
-                  ]),
-                ),
+                bottomNavigationBar:
+                    RaceStateBottomnaviagationBar(value: model.txRaceState, setValue: model.oxigenTxRaceStateSet),
                 body: TabBarView(children: <Widget>[RaceSettings(), RaceLeaderBoard(model: model), RaceSettings()]),
               ),
             );
@@ -108,41 +96,54 @@ class RaceLeaderBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     final carControllerPairs = model.carControllerPairs().sorted((a, b) {
       if (a.value.rx.calculatedLaps == null && b.value.rx.calculatedLaps == null) return 0;
-      if (a.value.rx.calculatedLaps == null) return -1;
-      if (b.value.rx.calculatedLaps == null) return 1;
-      return a.value.rx.calculatedLaps!.compareTo(b.value.rx.calculatedLaps!);
+      if (a.value.rx.calculatedLaps == null) return 1;
+      if (b.value.rx.calculatedLaps == null) return -1;
+      return -a.value.rx.calculatedLaps!.compareTo(b.value.rx.calculatedLaps!);
     });
-    return FittedBox(
-      child: DataTable(
-          columnSpacing: 10,
-          columns: const [
-            DataColumn(label: Text('Pos'), numeric: true),
-            DataColumn(label: Text('Id'), numeric: true),
-            DataColumn(label: Text('Laps'), numeric: true),
-            DataColumn(label: Text('Lap time'), numeric: true),
-            DataColumn(label: Text('')),
-          ],
-          rows: carControllerPairs
-              .map((x) => DataRow(cells: [
-                    const DataCell(Text('1')),
-                    DataCell(Text(x.key.toString())),
-                    DataCell(Text(x.value.rx.calculatedLapTimeSeconds == null
-                        ? ''
-                        : x.value.rx.calculatedLapTimeSeconds!.toStringAsFixed(2))),
-                    DataCell(Text(x.value.rx.calculatedLaps == null ? '' : x.value.rx.calculatedLaps.toString())),
-                    DataCell(Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (x.value.rx.carOnTrack == OxigenRxCarOnTrack.carIsNotOnTheTrack)
-                          const Icon(Icons.car_crash, color: Colors.red),
-                        if (x.value.rx.carPitLane == OxigenRxCarPitLane.carIsInThePitLane) const Icon(Icons.car_repair),
-                        if (x.value.rx.trackCall == OxigenRxTrackCall.yes) const Icon(Icons.flag),
-                        if (x.value.rx.controllerBatteryLevel == OxigenRxControllerBatteryLevel.low)
-                          const Icon(Icons.battery_alert, color: Colors.red),
-                      ],
-                    ))
-                  ]))
-              .toList()),
-    );
+    return DataTable(
+        columnSpacing: 10,
+        columns: const [
+          DataColumn(label: Text('Pos'), numeric: true),
+          DataColumn(label: Text('Id'), numeric: true),
+          DataColumn(label: Text('Laps'), numeric: true),
+          DataColumn(label: Text('Lap time'), numeric: true),
+          DataColumn(label: Text('Fastest lap time'), numeric: true),
+          DataColumn(label: Text('Fuel/energy consumption latest 10 laps')),
+          DataColumn(label: Text('')),
+        ],
+        rows: carControllerPairs
+            .mapIndexed((i, x) => DataRow(cells: [
+                  DataCell(Text((i + 1).toString())),
+                  DataCell(Text(x.key.toString())),
+                  DataCell(Text(x.value.rx.calculatedLaps == null ? '' : x.value.rx.calculatedLaps.toString())),
+                  DataCell(Text(x.value.rx.calculatedLapTimeSeconds == null
+                      ? ''
+                      : x.value.rx.calculatedLapTimeSeconds!.toStringAsFixed(2))),
+                  DataCell(
+                      Text(x.value.rx.fastestLapTime == null ? '' : x.value.rx.fastestLapTime!.toStringAsFixed(2))),
+                  DataCell(Container(
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                      width: 300,
+                      child: x.value.rx.lapTriggerMeanValueMilliSeconds.isEmpty
+                          ? const Text('')
+                          : SfSparkBarChart(
+                              data: x.value.rx.lapTriggerMeanValueMilliSeconds.entries
+                                  .map((entry) => entry.value)
+                                  .toList(),
+                              axisLineColor: Colors.transparent,
+                            ))),
+                  DataCell(Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (x.value.rx.carOnTrack == OxigenRxCarOnTrack.carIsNotOnTheTrack)
+                        const Icon(Icons.car_crash, color: Colors.red),
+                      if (x.value.rx.carPitLane == OxigenRxCarPitLane.carIsInThePitLane) const Icon(Icons.car_repair),
+                      if (x.value.rx.trackCall == OxigenRxTrackCall.yes) const Icon(Icons.flag),
+                      if (x.value.rx.controllerBatteryLevel == OxigenRxControllerBatteryLevel.low)
+                        const Icon(Icons.battery_alert, color: Colors.red),
+                    ],
+                  ))
+                ]))
+            .toList());
   }
 }

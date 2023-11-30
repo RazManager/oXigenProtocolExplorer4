@@ -5,7 +5,7 @@ import 'command_slider.dart';
 import 'oxigen_constants.dart';
 import 'app_model.dart';
 import 'page_base.dart';
-import 'race_state_button.dart';
+import 'race_state_segmented_button.dart';
 
 class SettingsPage extends PageBase {
   const SettingsPage({super.key}) : super(title: 'Settings', body: const Settings());
@@ -114,7 +114,7 @@ class Settings extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          RaceStateButton(value: model.txRaceState, setValue: model.oxigenTxRaceStateSet),
+          RaceStateSegmentedButton(value: model.txRaceState, setValue: model.oxigenTxRaceStateSet),
           const SizedBox(height: 16),
           const Text(
             'Maximum speed (TX byte 1) *',
