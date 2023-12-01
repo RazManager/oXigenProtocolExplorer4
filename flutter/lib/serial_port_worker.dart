@@ -49,6 +49,7 @@ class RxCarControllerPair {
   List<TriggerMeanValue> triggerMeanValues = [];
   Queue<PracticeSessionLap> practiceSessionLaps = Queue<PracticeSessionLap>();
   Map<int, double> lapTriggerMeanValueMilliSeconds = {};
+  double triggerMeanValueMilliSecondsLevel = 0.0;
 }
 
 class TriggerMeanValue {
@@ -196,6 +197,7 @@ class SerialPortWorker {
             for (var i = -10; i < 0; i++) {
               x.value.rx.lapTriggerMeanValueMilliSeconds[i] = 0.0;
             }
+            x.value.rx.triggerMeanValueMilliSecondsLevel = 100;
           }
         }
         _txRaceState = message;
@@ -762,9 +764,11 @@ class SerialPortWorker {
       rxCarControllerPair.refreshRate =
           now.millisecondsSinceEpoch - rxCarControllerPair.updatedAt!.millisecondsSinceEpoch;
       if (rxCarControllerPair.calculatedLaps != null) {
-        rxCarControllerPair.lapTriggerMeanValueMilliSeconds.update(rxCarControllerPair.calculatedLaps!,
-            (value) => value + rxCarControllerPair.triggerMeanValue / rxCarControllerPair.refreshRate!);
-        print(rxCarControllerPair.lapTriggerMeanValueMilliSeconds[rxCarControllerPair.calculatedLaps]);
+        var triggerMeanValueMilliSecondsDelta = rxCarControllerPair.triggerMeanValue / rxCarControllerPair.refreshRate!;
+        rxCarControllerPair.lapTriggerMeanValueMilliSeconds
+            .update(rxCarControllerPair.calculatedLaps!, (value) => value + triggerMeanValueMilliSecondsDelta);
+        rxCarControllerPair.triggerMeanValueMilliSecondsLevel =
+            max(0, rxCarControllerPair.triggerMeanValueMilliSecondsLevel - triggerMeanValueMilliSecondsDelta);
       }
     }
     rxCarControllerPair.updatedAt = now;

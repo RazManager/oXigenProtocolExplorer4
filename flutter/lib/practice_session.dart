@@ -66,7 +66,7 @@ class _PracticeSessionState extends State<PracticeSession> {
                   ),
                 ),
                 bottomNavigationBar:
-                    RaceStateBottomnaviagationBar(value: model.txRaceState, setValue: model.oxigenTxRaceStateSet),
+                    RaceStateBottomNaviagationBar(value: model.txRaceState, setValue: model.oxigenTxRaceStateSet),
                 body: TabBarView(
                   children: <Widget>[
                     PracticeSessionTabAll(carControllerPairs: carControllerPairs, stopwatch: model.stopwatch)
