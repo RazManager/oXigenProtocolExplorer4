@@ -562,7 +562,7 @@ class SerialPortWorker {
       final now = DateTime.now();
       try {
         //print(buffer.length);
-        if (buffer.length == 5) {
+        if (buffer.length == 5 || buffer.length == 18) {
           _unusedBuffer = null;
           _callbackPort.send(DongleFirmwareVersionResponse(dongleFirmwareVersion: buffer[0] + buffer[1] / 100));
           _callbackPort.send(RxResponse(timestamp: now.millisecondsSinceEpoch, rxBufferLength: buffer.length));

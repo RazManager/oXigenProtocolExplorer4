@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:collection';
+import 'package:collection/collection.dart';
 import 'dart:isolate';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -12,6 +14,7 @@ class CarControllerPair {
   TxCarControllerPair tx = TxCarControllerPair();
   RxCarControllerPair rx = RxCarControllerPair();
   ScrollController scrollController = ScrollController();
+  int? position;
 }
 
 class AppModel extends ChangeNotifier {
@@ -45,6 +48,8 @@ class AppModel extends ChangeNotifier {
   Queue<int> refreshRatesQueue = Queue<int>();
   Queue<RxResponse> rxResponseQueue = Queue<RxResponse>();
   Stopwatch stopwatch = Stopwatch();
+
+  int dongleLapRaceTimerMax = 0;
 
   void platForm() async {
     var packageInfo = await PackageInfo.fromPlatform();
@@ -208,6 +213,13 @@ class AppModel extends ChangeNotifier {
         }
       }
 
+      var dongleLapRaceTimers = carControllerPairs().map((kv) => kv.value.rx.dongleLapRaceTimer);
+      if (dongleLapRaceTimers.isEmpty) {
+        dongleLapRaceTimerMax = 0;
+      } else {
+        dongleLapRaceTimerMax = dongleLapRaceTimers.reduce(max);
+      }
+
       rxResponseQueue.addLast(message);
       rxResponseQueue.removeWhere((x) => x.timestamp < (DateTime.now().millisecondsSinceEpoch - 10 * 1000));
 
@@ -232,6 +244,28 @@ class AppModel extends ChangeNotifier {
         x.value.rx.refreshRate != null &&
         x.value.rx.updatedAt != null &&
         x.value.rx.updatedAt!.isAfter(now.add(Duration(milliseconds: -rxControllerTimeout * 1000))));
+  }
+
+  Iterable<MapEntry<int, CarControllerPair>> carControllerPairPositions() {
+    var sorted = carControllerPairs().sorted((a, b) {
+      if (a.value.rx.calculatedLaps == null && b.value.rx.calculatedLaps == null) return 0;
+      if (a.value.rx.calculatedLaps == null) return 1;
+      if (b.value.rx.calculatedLaps == null) return -1;
+      var result = -a.value.rx.calculatedLaps!.compareTo(b.value.rx.calculatedLaps!);
+      if (result == 0) {
+        if (a.value.rx.previousLapRaceTimer == null && b.value.rx.previousLapRaceTimer == null) return 0;
+        if (a.value.rx.previousLapRaceTimer == null) return 1;
+        if (b.value.rx.previousLapRaceTimer == null) return -1;
+        return a.value.rx.previousLapRaceTimer!.compareTo(b.value.rx.previousLapRaceTimer!);
+      }
+      return result;
+    });
+
+    sorted.forEachIndexed((index, x) {
+      x.value.position = index + 1;
+    });
+
+    return sorted;
   }
 
   @override

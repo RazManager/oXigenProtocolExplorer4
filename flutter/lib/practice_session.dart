@@ -11,6 +11,7 @@ import 'oxigen_constants.dart';
 import 'race_state_bottom_navigation_bar.dart';
 import 'serial_port_worker.dart' hide CarControllerPair;
 import 'page_base.dart';
+import 'timer_header.dart';
 
 class PracticeSession extends StatefulWidget {
   const PracticeSession({super.key});
@@ -68,9 +69,7 @@ class _PracticeSessionState extends State<PracticeSession> {
                 bottomNavigationBar:
                     RaceStateBottomNaviagationBar(value: model.txRaceState, setValue: model.oxigenTxRaceStateSet),
                 body: TabBarView(
-                  children: <Widget>[
-                    PracticeSessionTabAll(carControllerPairs: carControllerPairs, stopwatch: model.stopwatch)
-                  ]
+                  children: <Widget>[PracticeSessionTabAll(model: model)]
                       .followedBy(carControllerPairs.map((x) => PracticeSessionTabId(
                             id: x.key,
                             carControllerPair: x.value,
@@ -89,47 +88,19 @@ class _PracticeSessionState extends State<PracticeSession> {
 }
 
 class PracticeSessionTabAll extends StatelessWidget {
-  const PracticeSessionTabAll({super.key, required this.carControllerPairs, required this.stopwatch});
-  final Iterable<MapEntry<int, CarControllerPair>> carControllerPairs;
-  final Stopwatch stopwatch;
-
-  String timerFormat(int value, int secondsFactor) {
-    if (value / secondsFactor < 3600) {
-      return '${value / secondsFactor ~/ 60}:${((value / secondsFactor) % 60).toInt().toString().padLeft(2, '0')}';
-    } else {
-      return '${value / secondsFactor ~/ 3600}:${((value / secondsFactor / 60) % 60).toInt().toString().padLeft(2, '0')}:${((value / secondsFactor) % 60).toInt().toString().padLeft(2, '0')}';
-    }
-  }
+  const PracticeSessionTabAll({super.key, required this.model});
+  final AppModel model;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
+      final carControllerPairs = model.carControllerPairs();
       final fontSize = min(constraints.maxHeight / 23, constraints.maxWidth / carControllerPairs.length / 10);
-      final dongleLapRaceTimerMax = carControllerPairs.map((kv) => kv.value.rx.dongleLapRaceTimer).reduce(max);
 
       return Column(
         children: [
           const SizedBox(height: 16),
-          Table(
-            children: [
-              TableRow(children: [
-                Center(
-                  child: Text(
-                    timerFormat(dongleLapRaceTimerMax, 100),
-                    style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Center(
-                  child: Text(
-                    timerFormat(stopwatch.elapsedMilliseconds, 1000),
-                    style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold),
-                  ),
-                )
-              ]),
-              const TableRow(
-                  children: [Center(child: Text('Dongle race timer')), Center(child: Text('Computer race timer'))])
-            ],
-          ),
+          TimerHeader(model: model, fontSize: fontSize),
           Table(
             children: [
               TableRow(
