@@ -50,6 +50,7 @@ class RxCarControllerPair {
   Queue<PracticeSessionLap> practiceSessionLaps = Queue<PracticeSessionLap>();
   Map<int, double> lapTriggerMeanValueMilliSeconds = {};
   double triggerMeanValueMilliSecondsLevel = 0.0;
+  double? lapsUntilEmpty;
 }
 
 class TriggerMeanValue {
@@ -198,6 +199,7 @@ class SerialPortWorker {
               x.value.rx.lapTriggerMeanValueMilliSeconds[i] = 0.0;
             }
             x.value.rx.triggerMeanValueMilliSecondsLevel = 100;
+            x.value.rx.lapsUntilEmpty = null;
           }
         }
         _txRaceState = message;
@@ -769,6 +771,11 @@ class SerialPortWorker {
             .update(rxCarControllerPair.calculatedLaps!, (value) => value + triggerMeanValueMilliSecondsDelta);
         rxCarControllerPair.triggerMeanValueMilliSecondsLevel =
             max(0, rxCarControllerPair.triggerMeanValueMilliSecondsLevel - triggerMeanValueMilliSecondsDelta);
+
+        if (rxCarControllerPair.calculatedLaps! >= 1) {
+          rxCarControllerPair.lapsUntilEmpty = rxCarControllerPair.triggerMeanValueMilliSecondsLevel /
+              rxCarControllerPair.lapTriggerMeanValueMilliSeconds[rxCarControllerPair.calculatedLaps! - 1]!;
+        }
       }
     }
     rxCarControllerPair.updatedAt = now;
