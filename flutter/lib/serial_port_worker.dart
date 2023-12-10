@@ -50,6 +50,7 @@ class RxCarControllerPair {
   Queue<PracticeSessionLap> practiceSessionLaps = Queue<PracticeSessionLap>();
   Map<int, double> lapTriggerMeanValueMilliSeconds = {};
   double triggerMeanValueMilliSecondsLevel = 0.0;
+  double triggerMeanValueMilliSecondsLevelMax = 100.0;
   double? lapsUntilEmpty;
 }
 
@@ -127,6 +128,11 @@ class SerialPortResponse {
   bool isOpen = false;
 }
 
+class BaudRateSetRequest {
+  BaudRateSetRequest({required this.baudRate});
+  final int baudRate;
+}
+
 class DongleFirmwareVersionResponse {
   DongleFirmwareVersionResponse({required this.dongleFirmwareVersion});
 
@@ -152,6 +158,7 @@ class SerialPortWorker {
   SerialPort? _serialPort;
   SerialPortReader? _serialPortReader;
   StreamSubscription<Uint8List>? _serialPortStreamSubscription;
+  int _baudRate = 19200;
 
   OxigenTxPitlaneLapCounting? _txPitlaneLapCounting;
   OxigenTxPitlaneLapTrigger? _txPitlaneLapTrigger;
@@ -176,6 +183,8 @@ class SerialPortWorker {
         _serialPortOpen();
       } else if (message is SerialPortCloseRequest) {
         _serialPortClose();
+      } else if (message is BaudRateSetRequest) {
+        _baudRateSet(message.baudRate);
       } else if (message is OxigenTxPitlaneLapCounting) {
         _txPitlaneLapCounting = message;
         _serialPortTx(null);
@@ -184,10 +193,8 @@ class SerialPortWorker {
         _serialPortTx(null);
       } else if (message is OxigenTxRaceState) {
         bool resetRaceTimer = false;
-        print('_txRaceState=$_txRaceState message=$message');
         if (_txRaceState == OxigenTxRaceState.stopped && message == OxigenTxRaceState.running) {
           resetRaceTimer = true;
-          print('resetRaceTimer');
           for (final x in _carControllerPairs.entries) {
             x.value.rx.previousLapRaceTimer = null;
             x.value.rx.calculatedLapTimeSeconds = null;
@@ -198,7 +205,7 @@ class SerialPortWorker {
             for (var i = -10; i < 0; i++) {
               x.value.rx.lapTriggerMeanValueMilliSeconds[i] = 0.0;
             }
-            x.value.rx.triggerMeanValueMilliSecondsLevel = 100;
+            x.value.rx.triggerMeanValueMilliSecondsLevel = x.value.rx.triggerMeanValueMilliSecondsLevelMax;
             x.value.rx.lapsUntilEmpty = null;
           }
         }
@@ -334,7 +341,7 @@ class SerialPortWorker {
       }
 
       final serialPortConfig = SerialPortConfig();
-      serialPortConfig.baudRate = 9600;
+      serialPortConfig.baudRate = _baudRate;
       serialPortConfig.bits = 8;
       serialPortConfig.parity = SerialPortParity.none;
       serialPortConfig.stopBits = 1;
@@ -369,6 +376,10 @@ class SerialPortWorker {
       print('_serialPortClose error: $e');
       _callbackPort.send(e);
     }
+  }
+
+  void _baudRateSet(int baudRate) {
+    _baudRate = baudRate;
   }
 
   void _serialPortDongleCommandDongleFirmwareVersion() {
@@ -769,8 +780,19 @@ class SerialPortWorker {
         var triggerMeanValueMilliSecondsDelta = rxCarControllerPair.triggerMeanValue / rxCarControllerPair.refreshRate!;
         rxCarControllerPair.lapTriggerMeanValueMilliSeconds
             .update(rxCarControllerPair.calculatedLaps!, (value) => value + triggerMeanValueMilliSecondsDelta);
-        rxCarControllerPair.triggerMeanValueMilliSecondsLevel =
-            max(0, rxCarControllerPair.triggerMeanValueMilliSecondsLevel - triggerMeanValueMilliSecondsDelta);
+
+        if (rxCarControllerPair.carPitLane == OxigenRxCarPitLane.carIsInThePitLane &&
+            rxCarControllerPair.carOnTrack == OxigenRxCarOnTrack.carIsOnTheTrack &&
+            rxCarControllerPair.triggerMeanValue == 0) {
+          // Re-fuel
+          rxCarControllerPair.triggerMeanValueMilliSecondsLevel = min(
+              rxCarControllerPair.triggerMeanValueMilliSecondsLevelMax,
+              rxCarControllerPair.triggerMeanValueMilliSecondsLevel + rxCarControllerPair.refreshRate! / 100);
+        } else {
+          // Consume
+          rxCarControllerPair.triggerMeanValueMilliSecondsLevel =
+              max(0, rxCarControllerPair.triggerMeanValueMilliSecondsLevel - triggerMeanValueMilliSecondsDelta);
+        }
 
         if (rxCarControllerPair.calculatedLaps! >= 1) {
           rxCarControllerPair.lapsUntilEmpty = rxCarControllerPair.triggerMeanValueMilliSecondsLevel /
