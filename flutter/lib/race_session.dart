@@ -248,89 +248,84 @@ class RaceDriverBoardCarController extends StatelessWidget {
                 const Text('Speed limiter'),
               ],
             ),
-          if (size > 300) const SizedBox(width: 16),
           if (size > 300)
             Stack(
               children: [
-                SizedBox(
-                  height: size - 40,
-                  width: size - 120,
-                  child: SfRadialGauge(
-                    axes: [
-                      RadialAxis(
-                        maximum: 127,
-                        pointers: [
-                          RangePointer(
-                              value: carControllerPairKv.value.rx.triggerMeanValue.toDouble(), color: Colors.indigo)
-                        ],
-                        annotations: [
-                          GaugeAnnotation(
-                              angle: 90,
-                              positionFactor: 0.9,
-                              widget: Column(children: [
+                SfRadialGauge(
+                  axes: [
+                    RadialAxis(
+                      maximum: 127,
+                      pointers: [
+                        RangePointer(
+                            value: carControllerPairKv.value.rx.triggerMeanValue.toDouble(), color: Colors.indigo)
+                      ],
+                      annotations: [
+                        GaugeAnnotation(
+                            angle: 90,
+                            positionFactor: 0.9,
+                            widget: Column(children: [
+                              SizedBox(
+                                height: 24,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (carControllerPairKv.value.rx.carOnTrack ==
+                                        OxigenRxCarOnTrack.carIsNotOnTheTrack)
+                                      const Icon(Icons.car_crash, color: Colors.red),
+                                    if (carControllerPairKv.value.rx.carPitLane ==
+                                        OxigenRxCarPitLane.carIsInThePitLane)
+                                      const Icon(Icons.car_repair),
+                                    if (carControllerPairKv.value.rx.arrowUpButton ==
+                                        OxigenRxArrowUpButton.buttonPressed)
+                                      const Icon(Icons.arrow_upward),
+                                    if (carControllerPairKv.value.rx.arrowDownButton ==
+                                        OxigenRxArrowDownButton.buttonPressed)
+                                      const Icon(Icons.arrow_downward),
+                                    if (carControllerPairKv.value.rx.roundButton == OxigenRxRoundButton.buttonPressed)
+                                      const Icon(Icons.arrow_downward),
+                                    if (carControllerPairKv.value.rx.trackCall == OxigenRxTrackCall.yes)
+                                      const Icon(Icons.flag),
+                                    if (carControllerPairKv.value.rx.controllerBatteryLevel ==
+                                        OxigenRxControllerBatteryLevel.low)
+                                      const Icon(Icons.battery_alert, color: Colors.red),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                carControllerPairKv.value.rx.triggerMeanValue.toString(),
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 48),
+                              ),
+                              if (carControllerPairKv.value.rx.triggerMeanValues
+                                      .map((x) => x.triggerMeanValue)
+                                      .reduce(max) >
+                                  0)
                                 SizedBox(
-                                  height: 24,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      if (carControllerPairKv.value.rx.carOnTrack ==
-                                          OxigenRxCarOnTrack.carIsNotOnTheTrack)
-                                        const Icon(Icons.car_crash, color: Colors.red),
-                                      if (carControllerPairKv.value.rx.carPitLane ==
-                                          OxigenRxCarPitLane.carIsInThePitLane)
-                                        const Icon(Icons.car_repair),
-                                      if (carControllerPairKv.value.rx.arrowUpButton ==
-                                          OxigenRxArrowUpButton.buttonPressed)
-                                        const Icon(Icons.arrow_upward),
-                                      if (carControllerPairKv.value.rx.arrowDownButton ==
-                                          OxigenRxArrowDownButton.buttonPressed)
-                                        const Icon(Icons.arrow_downward),
-                                      if (carControllerPairKv.value.rx.roundButton == OxigenRxRoundButton.buttonPressed)
-                                        const Icon(Icons.arrow_downward),
-                                      if (carControllerPairKv.value.rx.trackCall == OxigenRxTrackCall.yes)
-                                        const Icon(Icons.flag),
-                                      if (carControllerPairKv.value.rx.controllerBatteryLevel ==
-                                          OxigenRxControllerBatteryLevel.low)
-                                        const Icon(Icons.battery_alert, color: Colors.red),
-                                    ],
-                                  ),
-                                ),
-                                Text(
-                                  carControllerPairKv.value.rx.triggerMeanValue.toString(),
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 48),
-                                ),
-                                if (carControllerPairKv.value.rx.triggerMeanValues
-                                        .map((x) => x.triggerMeanValue)
-                                        .reduce(max) >
-                                    0)
-                                  SizedBox(
-                                    width: size / 4,
-                                    child: SfSparkAreaChart(
-                                        data: carControllerPairKv.value.rx.triggerMeanValues
-                                            .map((x) => x.triggerMeanValue)
-                                            .toList(),
-                                        color: Colors.indigo,
-                                        axisLineColor: Colors.transparent),
-                                  ),
-                                const SizedBox(height: 8),
-                                if (carControllerPairKv.value.rx.lapTriggerMeanValueMilliSeconds.isNotEmpty &&
-                                    carControllerPairKv.value.rx.calculatedLaps != null &&
-                                    carControllerPairKv.value.rx.calculatedLaps! >= 1)
-                                  SizedBox(
-                                    width: size / 4,
-                                    child: SfSparkBarChart(
-                                      data: carControllerPairKv.value.rx.lapTriggerMeanValueMilliSeconds.entries
-                                          .map((entry) => entry.value)
+                                  width: size / 4,
+                                  child: SfSparkAreaChart(
+                                      data: carControllerPairKv.value.rx.triggerMeanValues
+                                          .map((x) => x.triggerMeanValue)
                                           .toList(),
                                       color: Colors.indigo,
-                                      axisLineColor: Colors.transparent,
-                                    ),
+                                      axisLineColor: Colors.transparent),
+                                ),
+                              const SizedBox(height: 8),
+                              if (carControllerPairKv.value.rx.lapTriggerMeanValueMilliSeconds.isNotEmpty &&
+                                  carControllerPairKv.value.rx.calculatedLaps != null &&
+                                  carControllerPairKv.value.rx.calculatedLaps! >= 1)
+                                SizedBox(
+                                  width: size / 4,
+                                  child: SfSparkBarChart(
+                                    data: carControllerPairKv.value.rx.lapTriggerMeanValueMilliSeconds.entries
+                                        .map((entry) => entry.value)
+                                        .toList(),
+                                    color: Colors.indigo,
+                                    axisLineColor: Colors.transparent,
                                   ),
-                              ]))
-                        ],
-                      )
-                    ],
-                  ),
+                                ),
+                            ]))
+                      ],
+                    )
+                  ],
                 ),
                 Table(columnWidths: const <int, TableColumnWidth>{
                   0: IntrinsicColumnWidth(),
@@ -402,7 +397,6 @@ class RaceDriverBoardCarController extends StatelessWidget {
                     textAlign: TextAlign.end)
               ])
             ]),
-          const SizedBox(width: 16),
           Column(
             children: [
               SizedBox(
