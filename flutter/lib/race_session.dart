@@ -179,7 +179,7 @@ class RaceDriverBoard extends StatelessWidget {
       final rows = (carControllerPairslength / columns).ceil();
       size = (constraint.maxHeight - 16 - 43) / rows;
 
-      //print('${constraint.maxHeight} ${constraint.maxWidth} $size $rows $columns');
+      print('${constraint.maxHeight} ${constraint.maxWidth} $size $rows $columns');
       return Column(children: [
         const SizedBox(height: 16),
         TimerHeader(model: model, fontSize: 16),
@@ -191,7 +191,7 @@ class RaceDriverBoard extends StatelessWidget {
                     ? SizedBox(
                         height: size,
                         child: RaceDriverBoardCarController(
-                          carControllerPairKv: carControllerPairs.toList()[row * 2 + column],
+                          carControllerPairKv: carControllerPairs.toList()[row * columns + column],
                           model: model,
                           size: size,
                         ),
