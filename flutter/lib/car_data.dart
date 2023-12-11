@@ -5,7 +5,6 @@ import 'app_model.dart';
 import 'oxigen_constants.dart';
 import 'page_base.dart';
 
-
 // Car data view
 
 class CarDataPage extends PageBase {
@@ -55,7 +54,9 @@ class CarData extends StatelessWidget {
                                 ? null
                                 : Text(x.value.rx.controllerCarLinkCount.toString()),
                             child: const Icon(Icons.link))),
-                        DataCell(Text(x.value.rx.carFirmwareVersion.toString())),
+                        DataCell(x.value.rx.carFirmwareVersion == null
+                            ? const Text('')
+                            : Text(x.value.rx.carFirmwareVersion.toString())),
                       ]))
                   .toList()),
         );

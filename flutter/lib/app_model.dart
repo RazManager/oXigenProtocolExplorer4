@@ -107,8 +107,10 @@ class AppModel extends ChangeNotifier {
     _sendPort!.send(SerialPortCloseRequest());
   }
 
-  void baudRateSet(int baudRate) {
-    _sendPort!.send(BaudRateSetRequest(baudRate: baudRate));
+  void baudRateSet(int value) {
+    baudRate = value;
+    _sendPort!.send(BaudRateSetRequest(baudRate: value));
+    notifyListeners();
   }
 
   void oxigenTxPitlaneLapCountingSet(OxigenTxPitlaneLapCounting value) {
