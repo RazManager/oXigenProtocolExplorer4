@@ -212,6 +212,9 @@ class SerialPortWorker {
         _txRaceState = message;
         if (resetRaceTimer) {
           _serialPortTx(null);
+          _serialPortTx(null);
+          _serialPortTx(null);
+          _serialPortTx(null);
         }
         _serialPortTx(null);
       } else if (message is MaximumSpeedRequest) {
