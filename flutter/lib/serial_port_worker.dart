@@ -158,7 +158,7 @@ class SerialPortWorker {
   SerialPort? _serialPort;
   SerialPortReader? _serialPortReader;
   StreamSubscription<Uint8List>? _serialPortStreamSubscription;
-  int _baudRate = 19200;
+  int _baudRate = 9600;
 
   OxigenTxPitlaneLapCounting? _txPitlaneLapCounting;
   OxigenTxPitlaneLapTrigger? _txPitlaneLapTrigger;
@@ -210,13 +210,12 @@ class SerialPortWorker {
           }
         }
         _txRaceState = message;
-        if (resetRaceTimer) {
-          _serialPortTx(null);
-          _serialPortTx(null);
-          _serialPortTx(null);
-          _serialPortTx(null);
-        }
         _serialPortTx(null);
+        if (resetRaceTimer) {
+          Future.delayed(const Duration(milliseconds: 1000), () {
+            _serialPortTx(null);
+          });
+        }
       } else if (message is MaximumSpeedRequest) {
         _maximumSpeed = message.maximumSpeed;
         _serialPortTx(null);
@@ -740,11 +739,8 @@ class SerialPortWorker {
     }
 
     rxCarControllerPair.dongleRaceTimer = buffer[10] * 65536 + buffer[11] * 256 + buffer[12];
-    //print(
-    //    'oldDongleLaps=$oldDongleLaps dongleLaps=${rxCarControllerPair.dongleLaps} dongleRaceTimer=${rxCarControllerPair.dongleRaceTimer} previousLapRaceTimer=${rxCarControllerPair.previousLapRaceTimer}');
 
-    rxCarControllerPair.dongleLapRaceTimer =
-        rxCarControllerPair.dongleRaceTimer - rxCarControllerPair.dongleLapTimeDelay;
+    rxCarControllerPair.dongleLapRaceTimer = rxCarControllerPair.dongleRaceTimer - rxCarControllerPair.dongleLapTimeDelay;
 
     rxCarControllerPair.dongleLapTimeSeconds = rxCarControllerPair.dongleLapTime / 99.25;
 
@@ -757,6 +753,7 @@ class SerialPortWorker {
         if (rxCarControllerPair.previousLapRaceTimer != null) {
           rxCarControllerPair.calculatedLapTimeSeconds =
               (rxCarControllerPair.dongleLapRaceTimer - rxCarControllerPair.previousLapRaceTimer!) / 100.0;
+          //print ('${rxCarControllerPair.calculatedLapTimeSeconds} ${rxCarControllerPair.dongleLapRaceTimer} ${rxCarControllerPair.previousLapRaceTimer}');
 
           if (rxCarControllerPair.fastestLapTime == null ||
               rxCarControllerPair.fastestLapTime! > rxCarControllerPair.calculatedLapTimeSeconds!) {

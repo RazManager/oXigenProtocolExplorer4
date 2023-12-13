@@ -401,6 +401,7 @@ class RaceDriverBoardCarController extends StatelessWidget {
                         textAlign: TextAlign.end)
                   ])
                 ]),
+              const SizedBox(width: 8),
               Column(
                 children: [
                   Flexible(

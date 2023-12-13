@@ -34,7 +34,7 @@ class AppModel extends ChangeNotifier {
   SerialPortResponse? _serialPortResponse;
   List<SerialPortListResponse> serialPortList = [];
   Timer? _serialPortOpenedTimer;
-  int baudRate = 19200;
+  int baudRate = 9600;
   List<int> baudRates = [9600, 19200, 38400, 57600, 115200, 128000];
 
   OxigenTxPitlaneLapCounting? txPitlaneLapCounting;
