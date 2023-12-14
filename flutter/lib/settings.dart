@@ -49,6 +49,19 @@ class Settings extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
+          const Text(
+            'Baud rate *',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          DropdownButton<int>(
+              value: model.baudRate,
+              items: model.baudRates
+                  .map<DropdownMenuItem<int>>(
+                    (x) => DropdownMenuItem<int>(value: x, child: Text(x.toString())),
+                  )
+                  .toList(),
+              onChanged: (value) => model.baudRateSet(value!)),
+          const SizedBox(height: 8),
           Table(
             columnWidths: const <int, TableColumnWidth>{
               0: IntrinsicColumnWidth(),

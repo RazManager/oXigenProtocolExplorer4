@@ -5,7 +5,7 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = oxigen_protocol_explorer_4
+PRODUCT_NAME = oXigen Protocol Explorer 4
 
 // The application's bundle identifier
 PRODUCT_BUNDLE_IDENTIFIER = com.example.oxigenProtocolExplorer4
