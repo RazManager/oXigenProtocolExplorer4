@@ -102,6 +102,7 @@ class _TxRxLoopState extends State<TxRxLoop> {
                 if (chartType == ChartType.bar)
                   Expanded(
                     child: SfCartesianChart(
+                      key: UniqueKey(),
                       primaryXAxis: const CategoryAxis(majorGridLines: MajorGridLines(width: 0)),
                       primaryYAxis: NumericAxis(
                         title: const AxisTitle(text: 'Car/controller RX refresh rate (ms)'),
@@ -109,17 +110,6 @@ class _TxRxLoopState extends State<TxRxLoop> {
                         maximum:
                             model.refreshRatesQueue.isEmpty ? null : model.refreshRatesQueue.reduce(max).toDouble(),
                       ),
-                      axes: const [
-                        NumericAxis(
-                            name: 'yAxisRefreshRate',
-                            title: AxisTitle(text: 'RX buffer length (bytes)'),
-                            opposedPosition: true,
-                            minimum: 0,
-                            maximum: 52,
-                            interval: 13,
-                            majorGridLines: MajorGridLines(width: 0))
-                      ],
-                      enableSideBySideSeriesPlacement: false,
                       series: [
                         ColumnSeries<MapEntry<int, CarControllerPair>, String>(
                             dataSource: carControllerPairs.toList(),
@@ -130,22 +120,13 @@ class _TxRxLoopState extends State<TxRxLoop> {
                             animationDelay: 0,
                             animationDuration: 0,
                             width: 0.3),
-                        ColumnSeries<int, String>(
-                            dataSource: [model.rxBufferLength],
-                            xValueMapper: (_, __) => 'Buffer length',
-                            yValueMapper: (data, _) => data,
-                            yAxisName: 'yAxisRefreshRate',
-                            color: Colors.black,
-                            dataLabelSettings: const DataLabelSettings(isVisible: true),
-                            animationDelay: 0,
-                            animationDuration: 0,
-                            width: 0.3),
                       ],
                     ),
                   ),
                 if (chartType == ChartType.line)
                   Expanded(
                       child: SfCartesianChart(
+                      key: UniqueKey(),
                     primaryXAxis: NumericAxis(
                         minimum: carControllerPairs.isEmpty
                             ? 0
