@@ -209,10 +209,10 @@ class PracticeSessionTabId extends StatelessWidget {
         children: [
           Expanded(
             child: SfCartesianChart(
-              primaryXAxis: NumericAxis(
+              primaryXAxis: const NumericAxis(
                 title: AxisTitle(text: 'Lap'),
                 interval: 1,
-                majorGridLines: const MajorGridLines(width: 0),
+                majorGridLines: MajorGridLines(width: 0),
               ),
               primaryYAxis:
                   NumericAxis(minimum: carControllerPair.rx.fastestLapTime ?? 0, isVisible: false, plotBands: [
@@ -292,8 +292,8 @@ class PracticeSessionTabId extends StatelessWidget {
               ),
               Expanded(
                 child: SfCartesianChart(
-                  primaryXAxis: NumericAxis(isVisible: false),
-                  primaryYAxis: NumericAxis(maximum: 127, minimum: 0),
+                  primaryXAxis: const NumericAxis(isVisible: false),
+                  primaryYAxis: const NumericAxis(maximum: 127, minimum: 0),
                   series: [
                     AreaSeries(
                       dataSource: carControllerPair.rx.triggerMeanValues,

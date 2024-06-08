@@ -1,8 +1,10 @@
+enum OxigenTxRaceState { running, paused, stopped, flaggedLcEnabled, flaggedLcDisabled }
+
 enum OxigenTxPitlaneLapCounting { enabled, disabled }
 
 enum OxigenTxPitlaneLapTrigger { pitlaneEntry, pitlaneExit }
 
-enum OxigenTxRaceState { running, paused, stopped, flaggedLcEnabled, flaggedLcDisabled }
+enum OxigenTxTriggerMode { position, pwm }
 
 enum OxigenTxTransmissionPower { dBm18, dBm12, dBm6, dBm0 }
 

@@ -39,6 +39,7 @@ class AppModel extends ChangeNotifier {
 
   OxigenTxPitlaneLapCounting? txPitlaneLapCounting;
   OxigenTxPitlaneLapTrigger? txPitlaneLapTrigger;
+  OxigenTxTriggerMode? txTriggerMode;
   OxigenTxRaceState? txRaceState;
   int? maximumSpeed;
   int rxControllerTimeout = 30;
@@ -75,6 +76,7 @@ class AppModel extends ChangeNotifier {
         !_serialPortResponse!.isOpen &&
         txPitlaneLapCounting != null &&
         (txPitlaneLapCounting == OxigenTxPitlaneLapCounting.disabled || txPitlaneLapTrigger != null) &&
+        txTriggerMode != null &&
         txRaceState != null &&
         maximumSpeed != null;
   }
@@ -122,6 +124,12 @@ class AppModel extends ChangeNotifier {
   void oxigenPitlaneLapTriggerModeSet(OxigenTxPitlaneLapTrigger value) {
     txPitlaneLapTrigger = value;
     _sendPort!.send(txPitlaneLapTrigger!);
+    notifyListeners();
+  }
+
+  void oxigenTriggerModeSet(OxigenTxTriggerMode value) {
+    txTriggerMode = value;
+    _sendPort!.send(txTriggerMode!);
     notifyListeners();
   }
 
