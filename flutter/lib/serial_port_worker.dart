@@ -37,6 +37,8 @@ class RxCarControllerPair {
   late double dongleLapTimeSeconds;
   late int dongleLapTimeDelay;
   int dongleLaps = 0;
+  int dongleLapsMissed = 0;
+  bool newLap = false;
   int? previousLapRaceTimer;
   double? calculatedLapTimeSeconds;
   int? calculatedLaps;
@@ -203,6 +205,7 @@ class SerialPortWorker {
         if (_txRaceState == OxigenTxRaceState.stopped && message == OxigenTxRaceState.running) {
           resetRaceTimer = true;
           for (final x in _carControllerPairs.entries) {
+            x.value.rx.dongleLapsMissed = 0;
             x.value.rx.previousLapRaceTimer = null;
             x.value.rx.calculatedLapTimeSeconds = null;
             x.value.rx.calculatedLaps = null;
@@ -776,8 +779,12 @@ class SerialPortWorker {
 
     rxCarControllerPair.dongleLapTimeSeconds = rxCarControllerPair.dongleLapTime / 99.25;
 
-    if (rxCarControllerPair.dongleLaps > oldDongleLaps) {
+    rxCarControllerPair.newLap = rxCarControllerPair.dongleLaps > oldDongleLaps;
+    if (rxCarControllerPair.newLap) {
       // New lap, or the car crossed the start/finish line for the first time.
+
+      rxCarControllerPair.dongleLapsMissed += rxCarControllerPair.dongleLaps - oldDongleLaps - 1;
+
       if (rxCarControllerPair.dongleLaps == 0 || rxCarControllerPair.calculatedLaps == null) {
         rxCarControllerPair.calculatedLaps = 0;
       } else {
