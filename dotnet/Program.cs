@@ -16,7 +16,8 @@ internal class Program
     private short _controllerTimeout;
     private static SerialPort _serialPort;
 
-    private static ConcurrentDictionary<byte, DateTime?> _rxCarControllerPairs = new();
+    private static ConcurrentDictionary<byte, DateTime?> _refreshRates = new();
+    private static ConcurrentDictionary<byte, int?> _laps = new();
     private System.Threading.Timer? txTimeoutTimer;
 
     static void Main(string[] args)
@@ -50,19 +51,22 @@ internal class Program
 
         Console.WriteLine($"Opening {serialPortName}...");
         _serialPort = new SerialPort(serialPortName);
-        _serialPort.Open();
         _serialPort.BaudRate = 9600;
         _serialPort.DataBits = 8;
         _serialPort.Parity = Parity.None;
         _serialPort.StopBits = StopBits.One;
+        _serialPort.ReadBufferSize = 65536;
+        _serialPort.ReadTimeout = 300;
+        _serialPort.ReceivedBytesThreshold = 1;
+        _serialPort.Handshake = Handshake.XOnXOff;
         _serialPort.DtrEnable = true;
         _serialPort.RtsEnable = false;
-        _serialPort.Handshake = Handshake.None;
         _serialPort.DataReceived += _serialPort_Rx;
         _serialPort.ErrorReceived += _serialPort_ErrorReceived;
+        _serialPort.Open();
         Console.WriteLine($"{_serialPort.PortName} opened.");
 
-        var buffer = new byte[] { 15, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        var buffer = new byte[] { 6, 6, 6, 6, 0, 0, 0 };
         _serialPort.Write(buffer, 0, buffer.Length);
 
         Console.ReadLine();
@@ -80,15 +84,20 @@ internal class Program
             var bytesRead = _serialPort.Read(buffer, 0, _serialPort.BytesToRead);
             //Console.WriteLine($"{bytesRead} bytes received.");
 
-            if (bytesRead > 0 && bytesRead % 13 == 0)
+            if (bytesRead == 5 || bytesRead == 18)
+            {
+                buffer = new byte[] { 15, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+                _serialPort.Write(buffer, 0, buffer.Length);
+            }
+            else if (bytesRead > 0 && bytesRead % 13 == 0)
             {
                 var offset = 0;
                 do
                 {
                     var id = buffer[1 + offset];
+                    var lap = buffer[6 + offset] * 256 + buffer[5 + offset];
 
-                    _rxCarControllerPairs.TryGetValue(id, out var dt);
-
+                    _refreshRates.TryGetValue(id, out var dt);
                     if (!dt.HasValue)
                     {
                         Console.WriteLine($"Id={id}");
@@ -98,8 +107,27 @@ internal class Program
                         var refreshRate = Math.Round((now - dt.Value).TotalMilliseconds, 0);
                         Console.WriteLine($"Id={id}, Refresh rate={refreshRate}ms{(refreshRate > 310 ? " (more than 300)" : "")}");
                     }
+                    _refreshRates.AddOrUpdate(id, now, (_, _) => now);
 
-                    _rxCarControllerPairs.AddOrUpdate(id, now, (_, _) => now);
+                    _laps.TryGetValue(id, out var prevLap);
+                    if (!prevLap.HasValue)
+                    {
+                        Console.WriteLine($"Id={id} Lap={lap}");
+                    }
+                    else
+                    {
+                        if (lap > prevLap.Value)
+                        {
+                            if (lap - prevLap.Value > 1)
+                            {
+                                Console.WriteLine("*******************************************************");
+                                //Console.Beep(400, 1000);
+                            }
+                            Console.WriteLine($"Id={id} Lap={lap}");
+                            Console.Beep();
+                        }
+                    }
+                    _laps.AddOrUpdate(id, lap, (_, _) => lap);
 
                     offset += 13;
                 } while (offset < bytesRead - 1);
