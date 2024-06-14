@@ -171,8 +171,8 @@ class AppNavigationRail extends StatelessWidget {
                     label: Text('Settings'),
                   ),
                   NavigationRailDestination(
-                    icon: Icon(Icons.repeat),
-                    label: Text('TX/RX loop'),
+                    icon: Icon(Icons.send),
+                    label: Text('RX'),
                   ),
                   NavigationRailDestination(
                     icon: Icon(Icons.tune),

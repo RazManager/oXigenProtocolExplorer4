@@ -72,7 +72,7 @@ class _TxRxLoopState extends State<TxRxLoop> {
       Expanded(
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('TX/RX loop'),
+            title: const Text('RX'),
           ),
           body: Padding(
             padding: const EdgeInsets.all(16.0),

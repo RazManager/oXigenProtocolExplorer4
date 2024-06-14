@@ -34,6 +34,8 @@ class AppModel extends ChangeNotifier {
   SerialPortResponse? _serialPortResponse;
   List<SerialPortListResponse> serialPortList = [];
   Timer? _serialPortOpenedTimer;
+  int baudRate = 9600;
+  List<int> baudRates = [9600, 19200, 38400, 57600, 115200, 128000];
 
   OxigenTxPitlaneLapCounting? txPitlaneLapCounting;
   OxigenTxPitlaneLapTrigger? txPitlaneLapTrigger;
@@ -103,6 +105,12 @@ class AppModel extends ChangeNotifier {
   void serialPortClose() {
     dongleFirmwareVersion = null;
     _sendPort!.send(SerialPortCloseRequest());
+  }
+
+  void baudRateSet(int value) {
+    baudRate = value;
+    _sendPort!.send(BaudRateSetRequest(baudRate: value));
+    notifyListeners();
   }
 
   void oxigenTxPitlaneLapCountingSet(OxigenTxPitlaneLapCounting value) {
