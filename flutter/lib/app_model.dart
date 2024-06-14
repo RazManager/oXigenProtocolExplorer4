@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'dart:isolate';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -39,6 +40,7 @@ class AppModel extends ChangeNotifier {
 
   OxigenTxPitlaneLapCounting? txPitlaneLapCounting;
   OxigenTxPitlaneLapTrigger? txPitlaneLapTrigger;
+  OxigenTxTriggerMode? txTriggerMode;
   OxigenTxRaceState? txRaceState;
   int? maximumSpeed;
   int rxControllerTimeout = 30;
@@ -75,6 +77,7 @@ class AppModel extends ChangeNotifier {
         !_serialPortResponse!.isOpen &&
         txPitlaneLapCounting != null &&
         (txPitlaneLapCounting == OxigenTxPitlaneLapCounting.disabled || txPitlaneLapTrigger != null) &&
+        txTriggerMode != null &&
         txRaceState != null &&
         maximumSpeed != null;
   }
@@ -122,6 +125,12 @@ class AppModel extends ChangeNotifier {
   void oxigenPitlaneLapTriggerModeSet(OxigenTxPitlaneLapTrigger value) {
     txPitlaneLapTrigger = value;
     _sendPort!.send(txPitlaneLapTrigger!);
+    notifyListeners();
+  }
+
+  void oxigenTriggerModeSet(OxigenTxTriggerMode value) {
+    txTriggerMode = value;
+    _sendPort!.send(txTriggerMode!);
     notifyListeners();
   }
 
@@ -212,6 +221,10 @@ class AppModel extends ChangeNotifier {
       rxBufferLength = message.rxBufferLength;
 
       for (var kv in message.updatedRxCarControllerPairs.entries) {
+        if (kv.value.newLap) {
+          SystemSound.play(SystemSoundType.alert);
+        }
+
         _carControllerPairs[kv.key]!.rx = kv.value;
         if (kv.value.refreshRate != null) {
           refreshRatesQueue.addLast(kv.value.refreshRate!);

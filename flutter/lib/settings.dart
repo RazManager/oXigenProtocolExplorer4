@@ -30,37 +30,50 @@ class Settings extends StatelessWidget {
         ]);
       } else {
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text(
-            'Serial port *',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
           Row(
             children: [
-              DropdownButton<String>(
-                  value: model.serialPortGet(),
-                  items: model.serialPortList
-                      .map<DropdownMenuItem<String>>(
-                        (x) => DropdownMenuItem<String>(value: x.name, child: Text(x.description)),
-                      )
-                      .toList(),
-                  onChanged: (value) => model.serialPortSet(value!)),
-              const SizedBox(width: 16),
-              FilledButton.tonal(onPressed: () => model.serialPortRefresh(), child: const Text('Refresh')),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Serial port *',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Row(
+                    children: [
+                      DropdownButton<String>(
+                          value: model.serialPortGet(),
+                          items: model.serialPortList
+                              .map<DropdownMenuItem<String>>(
+                                (x) => DropdownMenuItem<String>(value: x.name, child: Text(x.description)),
+                              )
+                              .toList(),
+                          onChanged: (value) => model.serialPortSet(value!)),
+                      const SizedBox(width: 16),
+                      FilledButton.tonal(onPressed: () => model.serialPortRefresh(), child: const Text('Refresh')),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(width: 32),
+              Column(
+                children: [
+                  const Text(
+                    'Baud rate *',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  DropdownButton<int>(
+                      value: model.baudRate,
+                      items: model.baudRates
+                          .map<DropdownMenuItem<int>>(
+                            (x) => DropdownMenuItem<int>(value: x, child: Text(x.toString())),
+                          )
+                          .toList(),
+                      onChanged: (value) => model.baudRateSet(value!)),
+                ],
+              )
             ],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Baud rate *',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          DropdownButton<int>(
-              value: model.baudRate,
-              items: model.baudRates
-                  .map<DropdownMenuItem<int>>(
-                    (x) => DropdownMenuItem<int>(value: x, child: Text(x.toString())),
-                  )
-                  .toList(),
-              onChanged: (value) => model.baudRateSet(value!)),
           const SizedBox(height: 8),
           Table(
             columnWidths: const <int, TableColumnWidth>{
@@ -120,6 +133,25 @@ class Settings extends StatelessWidget {
                 ),
               ])
             ],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Trigger mode *',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<OxigenTxTriggerMode>(
+            segments: const [
+              ButtonSegment<OxigenTxTriggerMode>(value: OxigenTxTriggerMode.position, label: Text('Trigger position')),
+              ButtonSegment<OxigenTxTriggerMode>(value: OxigenTxTriggerMode.pwm, label: Text('PWM value sent to car')),
+            ],
+            emptySelectionAllowed: true,
+            selected: model.txTriggerMode == null ? {} : {model.txTriggerMode!},
+            onSelectionChanged: (selected) {
+              if (selected.isNotEmpty) {
+                model.oxigenTriggerModeSet(selected.first);
+              }
+            },
           ),
           const SizedBox(height: 16),
           const Text(

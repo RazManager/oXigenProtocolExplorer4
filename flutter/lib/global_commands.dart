@@ -84,8 +84,8 @@ class GlobalCommands extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               Switch(
-                thumbIcon: MaterialStateProperty.resolveWith<Icon?>((Set<MaterialState> states) {
-                  if (states.contains(MaterialState.selected)) {
+                thumbIcon: WidgetStateProperty.resolveWith<Icon?>((Set<WidgetState> states) {
+                  if (states.contains(WidgetState.selected)) {
                     return const Icon(Icons.arrow_upward);
                   }
                   if (model.globalCarControllerPairTx().forceLcUp != null) {
@@ -103,8 +103,8 @@ class GlobalCommands extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               Switch(
-                thumbIcon: MaterialStateProperty.resolveWith<Icon?>((Set<MaterialState> states) {
-                  if (states.contains(MaterialState.selected)) {
+                thumbIcon: WidgetStateProperty.resolveWith<Icon?>((Set<WidgetState> states) {
+                  if (states.contains(WidgetState.selected)) {
                     return const Icon(Icons.arrow_downward);
                   }
                   if (model.globalCarControllerPairTx().forceLcDown != null) {

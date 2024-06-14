@@ -123,9 +123,9 @@ class _CarControllerCommandsState extends State<CarControllerCommands> {
                                                 style: TextStyle(fontWeight: FontWeight.bold),
                                               ),
                                               Switch(
-                                                thumbIcon: MaterialStateProperty.resolveWith<Icon?>(
-                                                    (Set<MaterialState> states) {
-                                                  if (states.contains(MaterialState.selected)) {
+                                                thumbIcon:
+                                                    WidgetStateProperty.resolveWith<Icon?>((Set<WidgetState> states) {
+                                                  if (states.contains(WidgetState.selected)) {
                                                     return const Icon(Icons.arrow_upward);
                                                   }
                                                   if (x.value.tx.forceLcUp != null) {
@@ -143,9 +143,9 @@ class _CarControllerCommandsState extends State<CarControllerCommands> {
                                                 style: TextStyle(fontWeight: FontWeight.bold),
                                               ),
                                               Switch(
-                                                thumbIcon: MaterialStateProperty.resolveWith<Icon?>(
-                                                    (Set<MaterialState> states) {
-                                                  if (states.contains(MaterialState.selected)) {
+                                                thumbIcon:
+                                                    WidgetStateProperty.resolveWith<Icon?>((Set<WidgetState> states) {
+                                                  if (states.contains(WidgetState.selected)) {
                                                     return const Icon(Icons.arrow_downward);
                                                   }
                                                   if (x.value.tx.forceLcDown != null) {

@@ -39,6 +39,7 @@ class LapData extends StatelessWidget {
                     DataColumn(label: Text('Dongle delay (cs)'), numeric: true),
                     DataColumn(label: Text('Calc. lap time (s)'), numeric: true),
                     DataColumn(label: Text('Dongle laps'), numeric: true),
+                    DataColumn(label: Text('Missed dongle laps'), numeric: true),
                     DataColumn(label: Text('Calc. laps'), numeric: true),
                   ],
                   rows: carControllerPairs
@@ -52,6 +53,7 @@ class LapData extends StatelessWidget {
                                 ? ''
                                 : x.value.rx.calculatedLapTimeSeconds!.toStringAsFixed(2))),
                             DataCell(Text(x.value.rx.dongleLaps.toString())),
+                            DataCell(Text(x.value.rx.dongleLapsMissed.toString())),
                             DataCell(
                                 Text(x.value.rx.calculatedLaps == null ? '' : x.value.rx.calculatedLaps.toString())),
                           ]))
