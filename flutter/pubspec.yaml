@@ -39,10 +39,10 @@ dependencies:
   flutter_libserialport: ^0.4.0
   go_router: ^14.1.4
   package_info_plus: ^8.0.0
-  syncfusion_flutter_charts: ^26.1.35
-  syncfusion_flutter_gauges: ^26.1.35
-  flutter_launcher_icons: ^0.13.1
-  collection: ^1.18.0
+  syncfusion_flutter_charts: ^28.1.38
+  syncfusion_flutter_gauges: ^28.1.38
+  flutter_launcher_icons: ^0.14.2
+  collection: ^1.19.0
 
 dev_dependencies:
   flutter_test:
