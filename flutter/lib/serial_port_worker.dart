@@ -759,7 +759,7 @@ class SerialPortWorker {
       deviceSoftwareReleaseOwner = OxigenRxDeviceSoftwareReleaseOwner.carSoftwareRelease;
     }
 
-    final softwareRelease = 4 + (buffer[8] & 96) / 32 + (buffer[8] & 15) / 100;
+    final softwareRelease = 4 + (buffer[8] & 96) / 32 + (buffer[8] & 31) / 100;
 
     switch (deviceSoftwareReleaseOwner) {
       case OxigenRxDeviceSoftwareReleaseOwner.controllerSoftwareRelease:
